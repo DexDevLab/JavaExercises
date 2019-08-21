@@ -10,7 +10,7 @@ import javax.swing.JOptionPane;
 
 
 /**
- * Create a simple MessageDialog showing some result.
+ * Create a simple MessageDialog showing some result
  * 
  */
 public class ResultWithMessage
@@ -33,6 +33,7 @@ public class ResultWithMessage
   }
 }
   
+
 
 
 
