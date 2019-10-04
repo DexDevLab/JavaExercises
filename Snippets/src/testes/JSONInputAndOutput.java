@@ -1,10 +1,7 @@
 package testes;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.*;
-import java.io.FileWriter;
-import java.io.IOException;
+import testes.JSONCreator.Entry;
+import testes.JSONCreator.ToFile;
 
 
 
@@ -17,43 +14,30 @@ public class JSONInputAndOutput
   
   public static void main(String[] args)
   {
-   new JSONInputAndOutput().jsonWritingToFile();
-  }
-  
- 
-  
-  public void jsonWritingToFile()
-  {
-    
-    JsonNodeFactory factory = JsonNodeFactory.instance;
-    ObjectNode node = factory.objectNode();
-    ObjectNode child1 = factory.objectNode();
-    ObjectNode obj = factory.objectNode();
-    obj.put("nome", "Daniel Augusto Monteiro de Almeida");
-		obj.put("idade",30);
-		obj.put("CPF", "123.456.789-00");
-		obj.put("altura", "1.77");
-    obj.put("peso", "78kg");
-    child1.set("Dados Principais", obj);
-    node.set("Pessoas", child1);
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    JsonParser jp = new JsonParser();
-    String uglyJSONString = obj.toString();
-    JsonElement je = jp.parse(uglyJSONString);
-    String prettyJsonString = gson.toJson(je);
-    
-    try (FileWriter file = new FileWriter("file.json")) 
-    {
-			file.write(prettyJsonString);
-			file.flush();
-		}
-		catch (IOException e) {} 
-  }
-      
-  
-  
-}
+   
+    JSONCreator.Entry children1 = new Entry("Children1");
+    children1.add(new Entry("Children1.1"));
+    children1.add(new Entry("Children1.2"));
 
+    Entry children2 = new Entry("Children2");
+
+    Entry rootNode = new Entry("RootNode");
+    rootNode.add(children1);
+    rootNode.add(children2);
+
+    String a = rootNode.getJSONString(rootNode);
+//
+//    a = a.replaceAll("children", "");
+//    a = a.replaceAll("name", "");
+//
+//    System.out.println(a);
+
+    JSONCreator.ToFile b = new ToFile();
+    b.setPath("file.json");
+    b.write(a);
+  }
+
+}
 
 
 
