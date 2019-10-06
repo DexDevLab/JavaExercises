@@ -1,21 +1,21 @@
 package testes;
 
+
 import com.jcraft.jsch.*;
 import java.io.*;
 import java.util.Vector;
-import org.apache.commons.io.FileUtils;
 
 
 
 /**
   * @author Dex
   * @since 10/04/2019
-  * @version 1.0.0-20191004-35
+  * @version 1.2.1-20191005-50
   *
   * Changelog:
   * 
   * 
-  * Class used to stabilish network connections to SFTP transfers.
+  * API used for stabilish network connections to SFTP transfers.
   */
 public class SFTPConnector
 {
@@ -35,6 +35,10 @@ public class SFTPConnector
   Session session;
   Channel channel;
   ChannelSftp channelsftp;
+  /* Define if is downloading single file */
+  boolean singlefile;
+  /* In case of single file download, define filename. */
+  String filename;
   
   
   public void setLocal(String fil) { this.localfile = fil; }
@@ -61,6 +65,16 @@ public class SFTPConnector
 
   public String getServerPass() { return this.serverpass; }
   
+  public boolean isSingleFile() { return this.singlefile; }
+  
+  public String getSingleFileName() { return this.filename; }
+  
+  public void singleFile(String filename) 
+  { 
+    this.singlefile = true;
+    this.filename = filename;
+  }
+  
   
   public void connect() throws JSchException
   {
@@ -69,12 +83,12 @@ public class SFTPConnector
     session.setConfig("StrictHostKeyChecking", "no");
     session.setPassword(getServerPass());
     session.connect();
-    System.out.println("Session Connected.");
+    logging("Session Connected.");
     channel = session.openChannel("sftp");
     channel.connect();
-    System.out.println("Channel Connected.");
+    logging("Channel Connected.");
     channelsftp = (ChannelSftp) channel;
-    System.out.println("SFTP Channel Connected.");
+    logging("SFTP Channel Connected.");
   }
   
   public void disconnect()
@@ -82,13 +96,13 @@ public class SFTPConnector
     if (channelsftp != null)
     {
       channelsftp.disconnect();
-      System.out.println("SFTP Channel Disconnected.");
+      logging("SFTP Channel Disconnected.");
       channel.disconnect();
-      System.out.println("Channel Disconnected.");
+      logging("Channel Disconnected.");
       session.disconnect();
-      System.out.println("Session Disconnected.");
+      logging("Session Disconnected.");
     }
-    else { System.out.println("ERROR: Channel is null."); }
+    else { logging("ERROR: Channel is null."); }
   }
   
   public void upload() throws SftpException, IOException, FileNotFoundException, InterruptedException, JSchException
@@ -103,17 +117,21 @@ public class SFTPConnector
     String sourcePath = getRemote();
     String destinationPath = getLocal();
     File dest = new File (destinationPath);
-    if (!dest.exists()) { if (dest.isFile()) { FileUtils.touch(dest); } else { dest.mkdir(); } }
+    if (!dest.exists()) { dest.mkdir();}
     recursiveFileDownload(sourcePath, destinationPath);
   }
 
   public void recursiveFileUpload(String sourcePath, String destinationPath) throws SftpException, FileNotFoundException, IOException, InterruptedException, JSchException 
   {
+    if (isSingleFile() == true)
+    {
+      sourcePath = sourcePath + "\\" + getSingleFileName();
+    }
     File sourceFile = new File(sourcePath);
     if (sourceFile.isFile()) 
     {
       channelsftp.cd(destinationPath);
-      System.out.println("Enviando arquivo \"" + sourceFile.getName() + "\"");
+      logging("Enviando arquivo \"" + sourceFile.getName() + "\"");
       if (!sourceFile.getName().startsWith(".")) { channelsftp.put(new FileInputStream(sourceFile), sourceFile.getName(), ChannelSftp.OVERWRITE); }
     } 
     else 
@@ -123,11 +141,11 @@ public class SFTPConnector
       {
         channelsftp.cd(destinationPath);
         SftpATTRS attrs = null;
-        try { attrs = channelsftp.stat(destinationPath + "/" + sourceFile.getName()); } catch (SftpException e) { System.out.println("\"" + destinationPath + "/" + sourceFile.getName() + "\" NÃO FOI ENCONTRADO."); }
-        if (attrs != null) { System.out.println("O diretório \"" + destinationPath + "\" existe no backup remoto."); }
+        try { attrs = channelsftp.stat(destinationPath + "/" + sourceFile.getName()); } catch (SftpException e) { logging("\"" + destinationPath + "/" + sourceFile.getName() + "\" NÃO FOI ENCONTRADO."); }
+        if (attrs != null) { logging("O diretório \"" + destinationPath + "\" existe no backup remoto."); }
         else 
         {
-          System.out.println("Criando Diretório remoto \"" + sourceFile.getName() + "\"");
+          logging("Criando Diretório remoto \"" + sourceFile.getName() + "\"");
           channelsftp.mkdir(sourceFile.getName());
         }
         for (File f: files) { recursiveFileUpload(f.getAbsolutePath(), destinationPath + "/" + sourceFile.getName()); }
@@ -138,25 +156,36 @@ public class SFTPConnector
   @SuppressWarnings("unchecked")
   public void recursiveFileDownload(String sourcePath, String destinationPath) throws SftpException, IOException, InterruptedException, JSchException 
   {
-    Vector<ChannelSftp.LsEntry> fileAndFolderList = channelsftp.ls(sourcePath);
-    for (ChannelSftp.LsEntry item : fileAndFolderList)
+    if (isSingleFile() == true) 
+    { 
+      channelsftp.get(sourcePath + "/" + getSingleFileName(), destinationPath + "\\" + getSingleFileName());
+      logging("Baixando arquivo \"" + getSingleFileName() + "\"");
+    }
+    else
     {
-      if (!item.getAttrs().isDir())
+      Vector<ChannelSftp.LsEntry> fileAndFolderList = channelsftp.ls(sourcePath);
+      for (ChannelSftp.LsEntry item : fileAndFolderList)
       {
-        if (!(new File(destinationPath + "/" + item.getFilename())).exists() || (item.getAttrs().getMTime() > Long.valueOf(new File(destinationPath + "/" + item.getFilename()).lastModified() / 1000).intValue()))
-        { 
-          System.out.println("Baixando arquivo \"" + item.getFilename() + "\"");
-          channelsftp.get(sourcePath + "/" + item.getFilename(), destinationPath + "/" + item.getFilename());
+        if (!item.getAttrs().isDir())
+        {
+          if (!(new File(destinationPath + "/" + item.getFilename())).exists() || (item.getAttrs().getMTime() > Long.valueOf(new File(destinationPath + "/" + item.getFilename()).lastModified() / 1000).intValue()))
+          { 
+            logging("Baixando arquivo \"" + item.getFilename() + "\"");
+            channelsftp.get(sourcePath + "/" + item.getFilename(), destinationPath + "/" + item.getFilename());
+          }
         }
-      }
-      else if (!(".".equals(item.getFilename()) || "..".equals(item.getFilename())))
-      {
-        System.out.println("Criando diretório local \"" + item.getFilename() + "\"");
-        new File(destinationPath + "/" + item.getFilename()).mkdirs();
-        recursiveFileDownload(sourcePath + "/" + item.getFilename(), destinationPath + "/"+ item.getFilename());
+        else if (!(".".equals(item.getFilename()) || "..".equals(item.getFilename())))
+        {
+          logging("Criando diretório local \"" + item.getFilename() + "\"");
+          new File(destinationPath + "/" + item.getFilename()).mkdirs();
+          recursiveFileDownload(sourcePath + "/" + item.getFilename(), destinationPath + "/"+ item.getFilename());
+        }
       }
     }
   }
+  
+  public void logging (String message) { System.out.println(message); }
+  
   
   /* For Testing */
 //  public static void main(String[] args) throws JSchException, SftpException, IOException, FileNotFoundException, InterruptedException
