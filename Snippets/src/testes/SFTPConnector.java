@@ -8,12 +8,9 @@ import java.util.Vector;
 
 
 /**
-  * @author Dex
+  * @author Daniel Augusto Monteiro de Almeida
   * @since 10/04/2019
-  * @version 1.2.1-20191005-50
-  *
-  * Changelog:
-  * 
+  * @version 1.3.0-20191017-51
   * 
   * API used for stabilish network connections to SFTP transfers.
   */
@@ -204,4 +201,5 @@ public class SFTPConnector
 //  }
    
 }
+
 
