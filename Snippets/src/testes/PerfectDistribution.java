@@ -1,5 +1,5 @@
 /*
- * 
+ *
  */
 package testes;
 
@@ -14,11 +14,11 @@ package testes;
  *  The Exercise was: "Create a program who can be distribute
  *  properly any possible division in correct multiples. Ex.:
  *  2000 distributed perfectly in 5 x 310, 1 x 450.
- * 
+ *
  */
 public class PerfectDistribution
 {
-  
+
       public static void main(String[] args) {
         int[] arr = {60, 110, 310, 450};
         int valor = 2000;
@@ -64,26 +64,5 @@ public class PerfectDistribution
         }
         return true;
     }
-  
-  
-  
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
