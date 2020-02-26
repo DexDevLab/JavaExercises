@@ -25,3 +25,7 @@
  process is running in memory. The second can return output to console.
  
  --------------------------------------------------------------------
+###### 02 / 26 / 2020
+
+New Exercises. A simple test with threads using locks, a Script File custom
+reader (something like JSON reader) and a Process Tester using Boolean returns.
