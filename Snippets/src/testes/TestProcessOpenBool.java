@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
 /**
  * Test if Specific Process is opened (now with boolean method).
  */
-public class TestProcessOpen2
+public class TestProcessOpenBool
 {
 
   public static boolean isProcessOpen(String processName)
@@ -50,6 +50,7 @@ public class TestProcessOpen2
     boolean ready = false;
     while(!ready)
     {
+      System.out.println("Validando. Aguarde...");
       ready = isProcessOpen("WINWORD.EXE");
       try
       {
@@ -59,7 +60,6 @@ public class TestProcessOpen2
       {
 
       }
-      System.out.println("Validando. Aguarde...");
     }
   }
 }
